@@ -1,9 +1,25 @@
-#libraries used face_recognition dlib, cmake, numpy, opencv-python
+#libraries used face_recognition dlib, cmake, numpy, opencv-python, transitions
 
 import cv2
 import numpy as np
 import face_recognition
 import os
+from transitions import Machine
+
+
+class Detect(object):
+    states = ['active', 'inactive']
+
+    def __init__(self, name):
+
+        self.name = name
+        self.machine = Machine(model=self, states=Detect.states, initial='inactive')
+        if matches[matchIndex]:
+            self.machine.add_transition(trigger='person', source='inactive', dest='active')
+
+        else:
+            self.machine.add_transition(trigger='nonperson', source='inactive', dest='inactive')
+
 
 path = 'faces'
 images = []
@@ -34,6 +50,7 @@ print('Encoding Complete')
 cap = cv2.VideoCapture(0)
 
 while True:
+
     # cap = cv2.VideoCapture(0)
     success, img = cap.read()
     imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
@@ -47,7 +64,7 @@ while True:
         faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
         # print(faceDis)
         matchIndex = np.argmin(faceDis)
-
+        motion = Detect("Motion")
         if matches[matchIndex]:
             name = names[matchIndex].upper()
             # print(name)
@@ -56,15 +73,16 @@ while True:
             cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.rectangle(img, (x1, y2 - 35), (x2, y2), (0, 255, 0), cv2.FILLED)
             cv2.putText(img, name, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 0.75, (255, 255, 255), 2)
-
+            motion.person()
         else:
             y1, x2, y2, x1 = faceLoc
             y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
             cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.rectangle(img, (x1, y2 - 35), (x2, y2), (0, 255, 0), cv2.FILLED)
-            cv2.putText(img, 'unknown', (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
+            cv2.putText(img, 'unknown', (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255, 255, 255), 2)
+            motion.nonperson()
 
-
+        print(motion.state)
     cv2.imshow('Webcam', img)
     # show webcam image
 
